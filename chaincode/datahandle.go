@@ -8,14 +8,14 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/hyperledger/fabric/protos/msp"
 )
 
 // 添加记录
 func recordCount(stub shim.ChaincodeStubInterface, num int) error {
 	creatorByte, err := stub.GetCreator()
-	fmt.Println("Creator: " + string(creatorByte))
+	//fmt.Println("Creator: " + string(creatorByte))
 
 	si := &msp.SerializedIdentity{}
 
