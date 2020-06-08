@@ -2,6 +2,8 @@ package models
 
 // 数据模型
 type DataEntry struct {
+	X []float64 `json:"x"`
+	Y float64   `json:"y"`
 }
 
 // 数据记录

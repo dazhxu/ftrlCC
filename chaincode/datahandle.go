@@ -2,6 +2,7 @@ package chaincode
 
 import (
 	"bsncompetition2/models"
+	"bsncompetition2/train"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -61,4 +62,34 @@ func recordCount(stub shim.ChaincodeStubInterface, num int) error {
 		return errors.New("Cannot put records bytes to state.")
 	}
 	return nil
+}
+
+// 初始化FTLR
+func initFTLR(stub shim.ChaincodeStubInterface) error {
+	if ftlr != nil {
+		return nil
+	}
+
+	ftlrBytes, err := stub.GetState(FTLR_MODEL_KEY)
+	if err != nil {
+		return err
+	}
+	if ftlrBytes == nil {
+		ftlr = train.Init(4, 1.0, 1.0, 0.1, 1.0, new(train.LR))
+	} else {
+		err = json.Unmarshal(ftlrBytes, ftlr)
+		if err != nil {
+			ftlr = train.Init(4, 1.0, 1.0, 0.1, 1.0, new(train.LR))
+		}
+	}
+	ftlrBytes, err = json.Marshal(ftlr)
+	if err != nil {
+		return err
+	}
+	err = stub.PutState(FTLR_MODEL_KEY, ftlrBytes)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }

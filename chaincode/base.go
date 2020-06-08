@@ -10,11 +10,14 @@ import (
 
 const (
 	TRAIN_RECORDS_KEY = "TRAIN_RECORDS"
-	SUCCESS           = 0
-	PARAM_ERR         = 1001
-	MARSHAL_ERR       = 1002
-	STATE_ERR         = 1003
-	RECORD_ERR        = 1004
+	FTLR_MODEL_KEY    = "FTLR_MODEL"
+	//LOSS_KEY 		  = "LOSS"
+	SUCCESS        = 0
+	INIT_MODEL_ERR = 1000
+	PARAM_ERR      = 1001
+	MARSHAL_ERR    = 1002
+	STATE_ERR      = 1003
+	RECORD_ERR     = 1004
 )
 
 // 使用一条数据进行训练
@@ -36,9 +39,24 @@ func trainOnce(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error(CCResponse(RECORD_ERR, err.Error()))
 	}
 
-	// TODO 训练逻辑
+	// 训练逻辑
+	if ftlr == nil {
+		initFTLR(stub)
+	}
 
-	return shim.Success(nil)
+	loss := ftlr.Update(dataEntry.X, dataEntry.Y)
+
+	// 将FTLR模型写入state
+	ftlrBytes, err := json.Marshal(ftlr)
+	if err != nil {
+		return shim.Error(CCResponse(MARSHAL_ERR, "Cannot marshal ftlr model."))
+	}
+	err = stub.PutState(FTLR_MODEL_KEY, ftlrBytes)
+	if err != nil {
+		return shim.Error(CCResponse(STATE_ERR, "Cannot put ftlr model to state."))
+	}
+
+	return shim.Success([]byte(CCResponse(SUCCESS, fmt.Sprintf("Final loss is %.6f", loss))))
 }
 
 // 使用一批数据进行训练
@@ -60,9 +78,27 @@ func trainBatch(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error(CCResponse(RECORD_ERR, err.Error()))
 	}
 
-	// TODO 训练逻辑
+	// 训练逻辑
+	if ftlr == nil {
+		initFTLR(stub)
+	}
 
-	return shim.Success(nil)
+	var loss float64
+	for _, entry := range dataEntries {
+		loss = ftlr.Update(entry.X, entry.Y)
+	}
+
+	// 将FTLR模型写入state
+	ftlrBytes, err := json.Marshal(ftlr)
+	if err != nil {
+		return shim.Error(CCResponse(MARSHAL_ERR, "Cannot marshal ftlr model."))
+	}
+	err = stub.PutState(FTLR_MODEL_KEY, ftlrBytes)
+	if err != nil {
+		return shim.Error(CCResponse(STATE_ERR, "Cannot put ftlr model to state."))
+	}
+
+	return shim.Success([]byte(CCResponse(SUCCESS, fmt.Sprintf("Final loss is %.6f", loss))))
 }
 
 // 预测
@@ -78,9 +114,15 @@ func predict(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error(CCResponse(MARSHAL_ERR, fmt.Sprintf("Cannot unmarshal %s to DataEntry", dataJson)))
 	}
 
-	// TODO 预测逻辑
+	// 预测逻辑
+	if ftlr == nil {
+		initFTLR(stub)
+	}
 
-	return shim.Success(nil)
+	dataEntry.Y = ftlr.Predict(dataEntry.X)
+	dataEntryBytes, _ := json.Marshal(dataEntry)
+
+	return shim.Success([]byte(CCResponse(SUCCESS, string(dataEntryBytes))))
 }
 
 // 输出各方数据统计结果
@@ -90,5 +132,5 @@ func statistics(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error(CCResponse(STATE_ERR, "Cannot get records from state."))
 	}
 
-	return shim.Success([]byte(CCResponse(SUCCESS, "SUCCESS")))
+	return shim.Success([]byte(CCResponse(SUCCESS, string(recordsBytes))))
 }
