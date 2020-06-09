@@ -1,16 +1,16 @@
 package chaincode
 
 import (
-	"bsncompetition2/models"
 	"encoding/json"
 	"fmt"
+	"ftrlCC/models"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
 
 const (
 	TRAIN_RECORDS_KEY = "TRAIN_RECORDS"
-	FTLR_MODEL_KEY    = "FTLR_MODEL"
+	FTRL_MODEL_KEY    = "FTRL_MODEL"
 	//LOSS_KEY 		  = "LOSS"
 	SUCCESS        = 0
 	INIT_MODEL_ERR = 1000
@@ -40,20 +40,20 @@ func trainOnce(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	}
 
 	// 训练逻辑
-	if ftlr == nil {
-		initFTLR(stub)
+	if ftrl == nil {
+		initFTRL(stub)
 	}
 
-	loss := ftlr.Update(dataEntry.X, dataEntry.Y)
+	loss := ftrl.Update(dataEntry.X, dataEntry.Y)
 
-	// 将FTLR模型写入state
-	ftlrBytes, err := json.Marshal(ftlr)
+	// 将FTRL模型写入state
+	ftrlBytes, err := json.Marshal(ftrl)
 	if err != nil {
-		return shim.Error(CCResponse(MARSHAL_ERR, "Cannot marshal ftlr model."))
+		return shim.Error(CCResponse(MARSHAL_ERR, "Cannot marshal ftrl model."))
 	}
-	err = stub.PutState(FTLR_MODEL_KEY, ftlrBytes)
+	err = stub.PutState(FTRL_MODEL_KEY, ftrlBytes)
 	if err != nil {
-		return shim.Error(CCResponse(STATE_ERR, "Cannot put ftlr model to state."))
+		return shim.Error(CCResponse(STATE_ERR, "Cannot put ftrl model to state."))
 	}
 
 	return shim.Success([]byte(CCResponse(SUCCESS, fmt.Sprintf("Final loss is %.6f", loss))))
@@ -79,23 +79,23 @@ func trainBatch(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	}
 
 	// 训练逻辑
-	if ftlr == nil {
-		initFTLR(stub)
+	if ftrl == nil {
+		initFTRL(stub)
 	}
 
 	var loss float64
 	for _, entry := range dataEntries {
-		loss = ftlr.Update(entry.X, entry.Y)
+		loss = ftrl.Update(entry.X, entry.Y)
 	}
 
-	// 将FTLR模型写入state
-	ftlrBytes, err := json.Marshal(ftlr)
+	// 将FTRL模型写入state
+	ftrlBytes, err := json.Marshal(ftrl)
 	if err != nil {
-		return shim.Error(CCResponse(MARSHAL_ERR, "Cannot marshal ftlr model."))
+		return shim.Error(CCResponse(MARSHAL_ERR, "Cannot marshal ftrl model."))
 	}
-	err = stub.PutState(FTLR_MODEL_KEY, ftlrBytes)
+	err = stub.PutState(FTRL_MODEL_KEY, ftrlBytes)
 	if err != nil {
-		return shim.Error(CCResponse(STATE_ERR, "Cannot put ftlr model to state."))
+		return shim.Error(CCResponse(STATE_ERR, "Cannot put ftrl model to state."))
 	}
 
 	return shim.Success([]byte(CCResponse(SUCCESS, fmt.Sprintf("Final loss is %.6f", loss))))
@@ -115,11 +115,11 @@ func predict(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	}
 
 	// 预测逻辑
-	if ftlr == nil {
-		initFTLR(stub)
+	if ftrl == nil {
+		initFTRL(stub)
 	}
 
-	dataEntry.Y = ftlr.Predict(dataEntry.X)
+	dataEntry.Y = ftrl.Predict(dataEntry.X)
 	dataEntryBytes, _ := json.Marshal(dataEntry)
 
 	return shim.Success([]byte(CCResponse(SUCCESS, string(dataEntryBytes))))

@@ -1,9 +1,9 @@
 package chaincode
 
 import (
-	"bsncompetition2/models"
-	"bsncompetition2/train"
-	"bsncompetition2/utils"
+	"ftrlCC/models"
+	"ftrlCC/train"
+	"ftrlCC/utils"
 
 	"encoding/json"
 
@@ -14,18 +14,18 @@ import (
 type LogisticCC struct {
 }
 
-var ftlr *train.FTLR
+var ftrl *train.FTRL
 
 func (lcc *LogisticCC) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	SetLogger("ChainCode Init start......")
 	defer SetLogger("ChainCode Init end......")
-	SetLogger("初始化FTLR模型...")
-	err := initFTLR(stub)
+	SetLogger("初始化FTRL模型...")
+	err := initFTRL(stub)
 	if err != nil {
 		SetLogger("初始化模型错误.")
 		return shim.Error(CCResponse(INIT_MODEL_ERR, err.Error()))
 	}
-	SetLogger("初始化FTLR模型完成")
+	SetLogger("初始化FTRL模型完成")
 	return shim.Success(nil)
 }
 

@@ -1,12 +1,10 @@
 package chaincode
 
 import (
-	"bsncompetition2/models"
-	"bsncompetition2/train"
 	"encoding/json"
 	"errors"
-	"fmt"
-
+	"ftrlCC/models"
+	"ftrlCC/train"
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -64,29 +62,29 @@ func recordCount(stub shim.ChaincodeStubInterface, num int) error {
 	return nil
 }
 
-// 初始化FTLR
-func initFTLR(stub shim.ChaincodeStubInterface) error {
-	if ftlr != nil {
+// 初始化FTRL
+func initFTRL(stub shim.ChaincodeStubInterface) error {
+	if ftrl != nil {
 		return nil
 	}
 
-	ftlrBytes, err := stub.GetState(FTLR_MODEL_KEY)
+	ftrlBytes, err := stub.GetState(FTRL_MODEL_KEY)
 	if err != nil {
 		return err
 	}
-	if ftlrBytes == nil {
-		ftlr = train.Init(4, 1.0, 1.0, 0.1, 1.0, new(train.LR))
+	if ftrlBytes == nil {
+		ftrl = train.Init(4, 1.0, 1.0, 0.1, 1.0, new(train.LR))
 	} else {
-		err = json.Unmarshal(ftlrBytes, ftlr)
+		err = json.Unmarshal(ftrlBytes, ftrl)
 		if err != nil {
-			ftlr = train.Init(4, 1.0, 1.0, 0.1, 1.0, new(train.LR))
+			ftrl = train.Init(4, 1.0, 1.0, 0.1, 1.0, new(train.LR))
 		}
 	}
-	ftlrBytes, err = json.Marshal(ftlr)
+	ftrlBytes, err = json.Marshal(ftrl)
 	if err != nil {
 		return err
 	}
-	err = stub.PutState(FTLR_MODEL_KEY, ftlrBytes)
+	err = stub.PutState(FTRL_MODEL_KEY, ftrlBytes)
 	if err != nil {
 		return err
 	}

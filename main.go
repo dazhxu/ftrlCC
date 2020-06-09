@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bsncompetition2/chaincode"
 	"fmt"
+	"ftrlCC/chaincode"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
